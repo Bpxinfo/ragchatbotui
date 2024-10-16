@@ -1,8 +1,0 @@
-{
-    "appService.zipIgnorePattern": [
-        "node_modules{,/**}",
-        ".vscode{,/**}"
-    ],
-    "appService.defaultWebAppToDeploy": "/subscriptions/08aa3fa3-f312-4a5e-98fa-a7340cc81899/resourceGroups/superbchatbot/providers/Microsoft.Web/sites/bpxaichatbot",
-    "appService.deploySubpath": "."
-}

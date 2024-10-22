@@ -75,7 +75,7 @@ function Fileprocess() {
     const startTime = Date.now(); // Record start time
 
     try {
-      const response = await axios.post('http://localhost:5000/upload', formData, {
+      const response = await axios.post('https://chatapi-ecbwhwf8bxhpd9ba.eastus2-01.azurewebsites.net/upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -93,7 +93,8 @@ function Fileprocess() {
         alert("Only PDF files are accepted.");
         setUploadProgress(0);
       } else if (response.status === 202) {
-        alert("File name already exists in Auzre. Please rename the file.");
+        // alert("File name already exists in Auzre. Please rename the file.");
+        alert(response.data.message);
         setUploadProgress(0);
       }else if (response.status === 203) {
         alert("PDF File is not readable. Please select with ocr option.");

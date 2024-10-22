@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { FiPlus, FiChevronLeft, FiChevronRight, FiSend, FiUser, FiCpu, FiLoader, FiSun, FiMoon } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
+import ReactMarkdown from 'react-markdown';
+import { BlockMath, InlineMath } from 'react-katex';
+import 'katex/dist/katex.min.css'; // Import KaTeX styles for proper LaTeX rendering
 
 function Chatbot() {
   const navigate = useNavigate();
@@ -15,23 +18,21 @@ function Chatbot() {
   const [loading, setLoading] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef(null);
-  const chatContainerRef = useRef(null);
+  const chatContainerRef = useRef(null); // Reference for the sidebar chat history container
   const messageContainerRef = useRef(null);
 
-  const scrollToBottom = () => {
-    if (messageContainerRef.current) {
-      const scrollContainer = messageContainerRef.current;
-      const isScrolledToBottom = 
-        scrollContainer.scrollHeight - scrollContainer.scrollTop <= scrollContainer.clientHeight + 100;
-      
-      if (isScrolledToBottom) {
-        scrollContainer.scrollTop = scrollContainer.scrollHeight;
-      }
+  const scrollToBottom = (ref) => {
+    if (ref.current) {
+      ref.current.scrollTop = ref.current.scrollHeight;
     }
   };
 
   useEffect(() => {
-    scrollToBottom();
+    scrollToBottom(messageContainerRef); // Scrolls the main message area
+  }, [messages]);
+
+  useEffect(() => {
+    scrollToBottom(chatContainerRef); // Scrolls the sidebar chat history
   }, [messages]);
 
   const goToFile = () => {
@@ -58,18 +59,14 @@ function Chatbot() {
     fetchFiles();
   }, []);
 
-  // Typing Indicator Component
   const TypingIndicator = () => (
     <div className={`p-3 rounded mb-2 bg-gray-300 text-gray-900 mr-auto max-w-[80%]`}>
       <div className="flex items-center">
         <FiCpu className="mr-2" />
         <div className="flex space-x-2">
-          <div className="w-2 h-2 bg-gray-600 rounded-full animate-bounce" 
-               style={{ animationDelay: '0ms' }} />
-          <div className="w-2 h-2 bg-gray-600 rounded-full animate-bounce" 
-               style={{ animationDelay: '150ms' }} />
-          <div className="w-2 h-2 bg-gray-600 rounded-full animate-bounce" 
-               style={{ animationDelay: '300ms' }} />
+          <div className="w-2 h-2 bg-gray-600 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+          <div className="w-2 h-2 bg-gray-600 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+          <div className="w-2 h-2 bg-gray-600 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
         </div>
       </div>
     </div>
@@ -91,8 +88,7 @@ function Chatbot() {
         fileName: selectedFile || '',
       };
 
-      // Add a small delay before the API call
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 500)); // Optional delay for streaming effect
 
       const response = await axios.post(
         'https://chatapi-ecbwhwf8bxhpd9ba.eastus2-01.azurewebsites.net/chat',
@@ -103,8 +99,8 @@ function Chatbot() {
           },
         }
       );
-      
-      setIsTyping(false); // Hide typing indicator once response starts streaming
+
+      setIsTyping(false);
       const botResponse = response?.data?.response || 'Sorry, I could not get a valid response.';
       let tempText = '';
 
@@ -121,10 +117,10 @@ function Chatbot() {
           return updatedMessages;
         });
 
-        await new Promise((resolve) => setTimeout(resolve, 5));
-        scrollToBottom();
+        await new Promise((resolve) => setTimeout(resolve, 5)); // Speed of rendering one character at a time
+        scrollToBottom(messageContainerRef);
       }
-      
+
     } catch (error) {
       console.error('Error fetching bot response:', error);
       setMessages((prevMessages) => [...prevMessages, { sender: 'bot', text: 'Sorry, something went wrong. Please try again.' }]);
@@ -138,9 +134,22 @@ function Chatbot() {
     window.location.reload();
   };
 
+  const MessageComponent = ({ message }) => (
+    <ReactMarkdown
+      className="text-sm break-words"
+      components={{
+        math: ({ value }) => <BlockMath>{value}</BlockMath>,
+        inlineMath: ({ value }) => <InlineMath>{value}</InlineMath>,
+      }}
+    >
+      {message}
+    </ReactMarkdown>
+  );
+
   return (
     <div className={`flex h-screen ${darkMode ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-900'}`}>
-      <div className={`relative h-full md:w-1/5 bg-gray-900 text-white flex flex-col transition-transform duration-300 ${showSidebar ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
+      {/* Sidebar */}
+      <div className={`relative h-full bg-gray-900 text-white flex flex-col transition-transform duration-300 ${showSidebar ? 'w-1/5' : 'w-0'} md:w-1/5 overflow-hidden`}>
         <div className="flex justify-between items-center p-4">
           <div className="text-xl font-bold">Chat History</div>
           <button onClick={handleNewChat}>
@@ -148,7 +157,8 @@ function Chatbot() {
           </button>
         </div>
 
-        <div className="space-y-4 p-4 overflow-y-auto h-64" ref={chatContainerRef}>
+        {/* Chat history container with auto-scroll */}
+        <div className="space-y-4 p-4 overflow-y-auto" ref={chatContainerRef}>
           {messages.map((message, index) => (
             <div
               key={index}
@@ -171,12 +181,10 @@ function Chatbot() {
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col">
+      {/* Main Chat Area */}
+      <div className={`flex-1 flex flex-col transition-all duration-300`}>
         <div className={`flex items-center justify-between p-4 shadow-md ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
-          <div
-            className={`text-xl font-bold cursor-pointer ${darkMode ? 'text-white-500' : 'text-black'}`}
-            onClick={goToFile}
-          >
+          <div className={`text-xl font-bold cursor-pointer ${darkMode ? 'text-white-500' : 'text-black'}`} onClick={goToFile}>
             File Process
           </div>
           <div className="flex items-center space-x-4">
@@ -186,64 +194,46 @@ function Chatbot() {
                 name="fileSelect"
                 value={selectedFile}
                 onChange={(e) => setSelectedFile(e.target.value)}
-                className={`transition-all duration-300 ease-in-out transform w-90 
-                  ${darkMode ? 'text-white bg-gray-700 hover:bg-gray-600 focus:ring-gray-500' : 'text-gray-900 bg-white hover:bg-gray-200 focus:ring-gray-300'}
-                  font-medium rounded-lg text-sm px-5 py-2.5 focus:outline-none focus:ring-4`}
+                className={`transition-all duration-300 ease-in-out transform w-90 ${darkMode ? 'text-white bg-gray-700 hover:bg-gray-600 focus:ring-gray-500' : 'text-gray-900 bg-white hover:bg-gray-200 focus:ring-gray-300'} font-medium rounded-lg text-sm shadow-sm p-2`}
               >
-                <option value="" disabled>Select File</option>
-                {files.length > 0 ? (
-                  files.map((file, index) => (
-                    <option key={index} value={file.name}>
-                      {file.name}
-                    </option>
-                  ))
-                ) : (
-                  <option value="" disabled>No files available</option>
-                )}
+                <option value="">Select a file</option>
+                {files.map((file) => (
+                  <option key={file.name} value={file.name}>{file.name}</option>
+                ))}
               </select>
             </div>
+            <button
+              onClick={toggleDarkMode}
+              className="p-2 rounded-full hover:bg-gray-200 focus:outline-none focus:ring focus:ring-blue-400"
+            >
+              {darkMode ? <FiSun /> : <FiMoon />}
+            </button>
           </div>
-
-          <button onClick={toggleDarkMode}>
-            {darkMode ? <FiSun className="text-yellow-500" /> : <FiMoon className="text-gray-500" />}
-          </button>
         </div>
 
         <div className="flex-1 p-4 overflow-y-auto" ref={messageContainerRef}>
           {messages.map((message, index) => (
-            <div
-              key={index}
-              className={`p-3 rounded mb-2 ${
-                message.sender === 'user' 
-                  ? 'bg-blue-500 text-white ml-auto max-w-[80%]' 
-                  : 'bg-gray-300 text-gray-900 mr-auto max-w-[80%]'
-              } transition-all duration-300 ease-in-out`}
-            >
+            <div key={index} className={`p-3 rounded mb-2 ${message.sender === 'user' ? 'bg-blue-500 text-white ml-auto max-w-[80%]' : 'bg-gray-300 text-gray-900 mr-auto max-w-[80%]'}`}>
               <div className="flex items-center">
                 {message.sender === 'user' ? <FiUser className="mr-2" /> : <FiCpu className="mr-2" />}
-                <p className="text-sm break-words">{message.text}</p>
+                <MessageComponent message={message.text} />
               </div>
             </div>
           ))}
           {isTyping && <TypingIndicator />}
-          <div ref={messagesEndRef} />
         </div>
 
-        <form onSubmit={handleSubmit} className={`p-4 shadow-md flex ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
+        <form onSubmit={handleSubmit} className="flex items-center p-4 border-t border-gray-200">
           <input
             type="text"
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
-            placeholder="Type your message..."
-            className={`flex-1 px-4 py-2 rounded-lg outline-none focus:ring-2 
-              ${darkMode ? 'bg-gray-700 text-white placeholder-gray-400 focus:ring-blue-500' : 'bg-gray-200 text-black placeholder-gray-500 focus:ring-blue-400'}`}
-            disabled={loading || isTyping}
+            className="flex-1 p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring focus:ring-blue-400"
+            placeholder="Type your message here..."
           />
           <button
             type="submit"
-            className={`ml-4 px-4 py-2 rounded-lg text-white ${(loading || isTyping) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600'}
-              ${darkMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-500'}`}
-            disabled={loading || isTyping}
+            className="p-3 ml-2 text-white bg-blue-500 rounded-full focus:outline-none focus:ring focus:ring-blue-400"
           >
             {loading ? <FiLoader className="animate-spin" /> : <FiSend />}
           </button>

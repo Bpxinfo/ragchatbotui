@@ -16,7 +16,7 @@ const ShareChat = () => {
   useEffect(() => {
     const fetchChatHistory = async () => {
       try {
-        const response = await axios.get(`http://127.0.0.1:5000/chat_history/${session_id}`);
+        const response = await axios.get(`https://chatapi-ecbwhwf8bxhpd9ba.eastus2-01.azurewebsites.net/chat_history/${session_id}`);
         const formattedMessages = response.data.map(item => ({
           text: item.role === 'user' ? item.content : item.message,
           sender: item.role === 'user' ? 'user' : 'bot'

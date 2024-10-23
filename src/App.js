@@ -5,6 +5,7 @@ import Login from './Login';
 import Fileprocess from './Fileprocess';
 import Chatbot from './Chatbot';
 import Networkdiagram from './NetworkDiagram';
+import ShareChat from './ShareChat';
 
 const App = () => {
   return (
@@ -14,6 +15,7 @@ const App = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/file-management" element={<Fileprocess />} />
         <Route path="/network-diagram" element={<Networkdiagram />} /> {/* Corrected path */}
+        <Route path="/share_chat/:session_id" element={<ShareChat />} />
       </Routes>
     </Router>
   );

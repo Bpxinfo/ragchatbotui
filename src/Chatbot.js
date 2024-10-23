@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { FiPlus, FiChevronLeft, FiChevronRight, FiSend, FiUser, FiCpu, FiLoader, FiSun, FiMoon } from 'react-icons/fi';
+import { FiPlus, FiChevronLeft, FiChevronRight, FiSend, FiUser, FiCpu, FiLoader, FiSun, FiMoon, FiShare2 } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import { BlockMath, InlineMath } from 'react-katex';
@@ -12,11 +12,12 @@ function Chatbot() {
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
-  const [messages, setMessages] = useState([{ sender: 'bot', text: "Hello! I'm your chatbot assistant. How can I help?" }]);
+  const [messages, setMessages] = useState([{ sender: 'assistant', text: "Hello! I'm your chatbot assistant. How can I help?" }]);
   const [inputMessage, setInputMessage] = useState('');
   const [selectedFile, setSelectedFile] = useState('');
   const [loading, setLoading] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  const [sessionId, setSessionId] = useState(localStorage.getItem('sessionId') || null); // Get session ID from localStorage if exists
   const messagesEndRef = useRef(null);
   const chatContainerRef = useRef(null); // Reference for the sidebar chat history container
   const messageContainerRef = useRef(null);
@@ -96,12 +97,21 @@ function Chatbot() {
         {
           headers: {
             'Content-Type': 'application/json',
+            ...(sessionId ? { 'Session-Id': sessionId } : {}), // Include sessionId if available
           },
         }
       );
 
       setIsTyping(false);
+
       const botResponse = response?.data?.response || 'Sorry, I could not get a valid response.';
+
+      // If the response includes a session ID, save it for future use
+      if (response?.data?.session_id && !sessionId) {
+        setSessionId(response.data.session_id);
+        localStorage.setItem('sessionId', response.data.session_id); // Save sessionId to localStorage
+      }
+
       let tempText = '';
 
       for (const char of botResponse) {
@@ -109,21 +119,21 @@ function Chatbot() {
 
         setMessages((prevMessages) => {
           const updatedMessages = [...prevMessages];
-          if (updatedMessages.length > 0 && updatedMessages[updatedMessages.length - 1]?.sender === 'bot') {
+          if (updatedMessages.length > 0 && updatedMessages[updatedMessages.length - 1]?.sender === 'assistant') {
             updatedMessages[updatedMessages.length - 1].text = tempText;
           } else {
-            updatedMessages.push({ sender: 'bot', text: tempText });
+            updatedMessages.push({ sender: 'assistant', text: tempText });
           }
           return updatedMessages;
         });
 
-        await new Promise((resolve) => setTimeout(resolve, 5)); // Speed of rendering one character at a time
+        await new Promise((resolve) => setTimeout(resolve, 20)); // Speed of rendering one character at a time
         scrollToBottom(messageContainerRef);
       }
 
     } catch (error) {
       console.error('Error fetching bot response:', error);
-      setMessages((prevMessages) => [...prevMessages, { sender: 'bot', text: 'Sorry, something went wrong. Please try again.' }]);
+      setMessages((prevMessages) => [...prevMessages, { sender: 'assistant', text: 'Sorry, something went wrong. Please try again.' }]);
     }
 
     setLoading(false);
@@ -131,7 +141,16 @@ function Chatbot() {
   };
 
   const handleNewChat = () => {
+    // Clear the session ID for a new chat
+    localStorage.removeItem('sessionId');
+    setSessionId(null);
     window.location.reload();
+  };
+
+  const handleShareChat = () => {
+    const shareUrl = `${window.location.origin}/share_chat/${sessionId}`;
+    navigator.clipboard.writeText(shareUrl);
+    alert(`Chat URL copied to clipboard: ${shareUrl}`);
   };
 
   const MessageComponent = ({ message }) => (
@@ -165,7 +184,7 @@ function Chatbot() {
               className={`p-3 rounded ${message.sender === 'user' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}
             >
               <p className="text-sm">
-                {message.sender === 'user' ? 'You' : 'Bot'}: {message.text.trim().split(/\s+/).slice(-4).join(' ')}
+                {message.sender === 'user' ? 'You' : 'Assistant'}: {message.text.trim().split(/\s+/).slice(-4).join(' ')}
               </p>
             </div>
           ))}
@@ -176,32 +195,22 @@ function Chatbot() {
             className="bg-gray-700 text-white px-2 py-1 rounded-full"
             onClick={() => setShowSidebar(!showSidebar)}
           >
-            {showSidebar ? <FiChevronLeft className="w-6 h-6" /> : <FiChevronRight className="w-6 h-6" />}
+            {showSidebar ? <FiChevronLeft /> : <FiChevronRight />}
           </button>
         </div>
       </div>
 
-      {/* Main Chat Area */}
-      <div className={`flex-1 flex flex-col transition-all duration-300`}>
-        <div className={`flex items-center justify-between p-4 shadow-md ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
-          <div className={`text-xl font-bold cursor-pointer ${darkMode ? 'text-white-500' : 'text-black'}`} onClick={goToFile}>
-            File Process
-          </div>
+      {/* Main Chat */}
+      <div className="flex flex-col flex-1">
+        <div className="flex justify-between p-4 border-b border-gray-200">
+          <div className="text-lg font-bold">Chatbot</div>
           <div className="flex items-center space-x-4">
-            <div className="relative inline-block text-left w-full">
-              <select
-                id="fileSelect"
-                name="fileSelect"
-                value={selectedFile}
-                onChange={(e) => setSelectedFile(e.target.value)}
-                className={`transition-all duration-300 ease-in-out transform w-90 ${darkMode ? 'text-white bg-gray-700 hover:bg-gray-600 focus:ring-gray-500' : 'text-gray-900 bg-white hover:bg-gray-200 focus:ring-gray-300'} font-medium rounded-lg text-sm shadow-sm p-2`}
-              >
-                <option value="">Select a file</option>
-                {files.map((file) => (
-                  <option key={file.name} value={file.name}>{file.name}</option>
-                ))}
-              </select>
-            </div>
+            <button
+              onClick={handleShareChat}
+              className="p-2 rounded-full hover:bg-gray-200 focus:outline-none focus:ring focus:ring-blue-400"
+            >
+              <FiShare2 />
+            </button>
             <button
               onClick={toggleDarkMode}
               className="p-2 rounded-full hover:bg-gray-200 focus:outline-none focus:ring focus:ring-blue-400"

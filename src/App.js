@@ -15,7 +15,7 @@ const App = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/file-management" element={<Fileprocess />} />
         <Route path="/network-diagram" element={<Networkdiagram />} /> {/* Corrected path */}
-        <Route path="/share_chat/:session_id" element={<ShareChat />} />
+        <Route path="/share_chat" element={<ShareChat />} />
       </Routes>
     </Router>
   );

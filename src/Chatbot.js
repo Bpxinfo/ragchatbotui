@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { FiPlus, FiChevronLeft, FiChevronRight, FiSend, FiUser, FiCpu, FiLoader, FiSun, FiMoon, FiShare2 } from 'react-icons/fi';
+import { FiPlus, FiChevronLeft, FiChevronRight, FiSend, FiUser, FiCpu, FiLoader, FiSun, FiMoon } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import { BlockMath, InlineMath } from 'react-katex';
@@ -12,7 +12,7 @@ function Chatbot() {
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
-  const [messages, setMessages] = useState([{ sender: 'assistant', text: "Hello! I'm your chatbot assistant. How can I help?" }]);
+  const [messages, setMessages] = useState([{ sender: 'bot', text: "Hello! I'm your chatbot assistant. How can I help?" }]);
   const [inputMessage, setInputMessage] = useState('');
   const [selectedFile, setSelectedFile] = useState('');
   const [loading, setLoading] = useState(false);
@@ -98,21 +98,12 @@ function Chatbot() {
         {
           headers: {
             'Content-Type': 'application/json',
-            ...(sessionId ? { 'Session-Id': sessionId } : {}), // Include sessionId if available
           },
         }
       );
 
       setIsTyping(false);
-
       const botResponse = response?.data?.response || 'Sorry, I could not get a valid response.';
-
-      // If the response includes a session ID, save it for future use
-      if (response?.data?.session_id && !sessionId) {
-        setSessionId(response.data.session_id);
-        localStorage.setItem('sessionId', response.data.session_id); // Save sessionId to localStorage
-      }
-
       let tempText = '';
 
       for (const char of botResponse) {
@@ -120,21 +111,22 @@ function Chatbot() {
 
         setMessages((prevMessages) => {
           const updatedMessages = [...prevMessages];
-          if (updatedMessages.length > 0 && updatedMessages[updatedMessages.length - 1]?.sender === 'assistant') {
+          if (updatedMessages.length > 0 && updatedMessages[updatedMessages.length - 1]?.sender === 'bot') {
             updatedMessages[updatedMessages.length - 1].text = tempText;
           } else {
-            updatedMessages.push({ sender: 'assistant', text: tempText });
+            updatedMessages.push({ sender: 'bot', text: tempText });
           }
           return updatedMessages;
         });
 
+        await new Promise((resolve) => setTimeout(resolve, 5)); // Speed of rendering one character at a time
         await new Promise((resolve) => setTimeout(resolve, 5)); // Speed of rendering one character at a time
         scrollToBottom(messageContainerRef);
       }
 
     } catch (error) {
       console.error('Error fetching bot response:', error);
-      setMessages((prevMessages) => [...prevMessages, { sender: 'assistant', text: 'Sorry, something went wrong. Please try again.' }]);
+      setMessages((prevMessages) => [...prevMessages, { sender: 'bot', text: 'Sorry, something went wrong. Please try again.' }]);
     }
 
     setLoading(false);
@@ -142,9 +134,6 @@ function Chatbot() {
   };
 
   const handleNewChat = () => {
-    // Clear the session ID for a new chat
-    localStorage.removeItem('sessionId');
-    setSessionId(null);
     window.location.reload();
   };
 
@@ -220,7 +209,7 @@ function Chatbot() {
               className={`p-3 rounded ${message.sender === 'user' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}
             >
               <p className="text-sm">
-                {message.sender === 'user' ? 'You' : 'Assistant'}: {message.text.trim().split(/\s+/).slice(-4).join(' ')}
+                {message.sender === 'user' ? 'You' : 'Bot'}: {message.text.trim().split(/\s+/).slice(-4).join(' ')}
               </p>
             </div>
           ))}
@@ -231,7 +220,7 @@ function Chatbot() {
             className="bg-gray-700 text-white px-2 py-1 rounded-full"
             onClick={() => setShowSidebar(!showSidebar)}
           >
-            {showSidebar ? <FiChevronLeft /> : <FiChevronRight />}
+            {showSidebar ? <FiChevronLeft className="w-6 h-6" /> : <FiChevronRight className="w-6 h-6" />}
           </button>
         </div>
       </div>

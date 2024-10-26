@@ -5,7 +5,6 @@ import Login from './Login';
 import Fileprocess from './Fileprocess';
 import Chatbot from './Chatbot';
 import Networkdiagram from './NetworkDiagram';
-import ShareChat from './ShareChat';
 
 const App = () => {
   return (

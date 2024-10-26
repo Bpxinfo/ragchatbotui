@@ -9,6 +9,7 @@ import { FiCpu, FiUser } from 'react-icons/fi';
 const ShareChat = () => {
   const { session_id } = useParams(); // Get session_id from URL params
   const [messages, setMessages] = useState([]); // State to hold chat history
+  const [fileName, setFileName] = useState(null); // State to hold optional file name
   const [loading, setLoading] = useState(false); // State to manage loading state
   const [error, setError] = useState(null); // State to handle errors
   const [password, setPassword] = useState(''); // State to hold the input password
@@ -18,15 +19,19 @@ const ShareChat = () => {
     try {
       // Fetch chat history using session_id and password
       const historyResponse = await axios.get(`https://chatapi-ecbwhwf8bxhpd9ba.eastus2-01.azurewebsites.net/chat_history/${password}`, {
-        
+        // Additional options if needed (like headers)
       });
 
-      const formattedMessages = historyResponse.data.map(item => ({
+      // Handle new JSON format
+      const { history, filename } = historyResponse.data;
+
+      const formattedMessages = history.map(item => ({
         text: item.role === 'user' ? item.content : item.message,
         sender: item.role === 'user' ? 'user' : 'bot'
       }));
 
       setMessages(formattedMessages); // Set formatted messages to state
+      setFileName(filename || null); // Set fileName if present, otherwise null
       setAuthenticated(true); // Mark as authenticated
     } catch (err) {
       console.error('Error:', err);
@@ -69,10 +74,17 @@ const ShareChat = () => {
     <div className="flex flex-col p-4 bg-gray-100 min-h-screen items-center justify-center">
       {authenticated ? (
         <>
-          <h1 className="text-2xl font-bold mb-4">Chat History</h1>
+          {/* Conditionally render title based on the file name */}
+          <h1 className="text-2xl font-bold mb-4">
+            {fileName ? `${fileName}` : 'Chat History'}
+          </h1>
+
           <div className="flex-1 overflow-y-auto w-full max-w-xl">
             {messages.map((message, index) => (
-              <div key={index} className={`p-3 rounded mb-2 ${message.sender === 'user' ? 'bg-blue-500 text-white ml-auto max-w-[80%]' : 'bg-gray-300 text-gray-900 mr-auto max-w-[80%]'}`}>
+              <div
+                key={index}
+                className={`p-3 rounded mb-2 ${message.sender === 'user' ? 'bg-blue-500 text-white ml-auto max-w-[80%]' : 'bg-gray-300 text-gray-900 mr-auto max-w-[80%]'}`}
+              >
                 <div className="flex items-center">
                   {message.sender === 'user' ? <FiUser className="mr-2" /> : <FiCpu className="mr-2" />}
                   <MessageComponent message={message.text} />

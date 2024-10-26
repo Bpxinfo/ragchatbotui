@@ -176,7 +176,7 @@ function Chatbot() {
         payload.fileName = selectedFile;
       }
       // Call the API to save the chat
-      const response = await axios.post(`http://127.0.0.1:5000/save_chat/`, payload, {
+      const response = await axios.post(`https://chatapi-ecbwhwf8bxhpd9ba.eastus2-01.azurewebsites.net/save_chat/`, payload, {
         headers: {
             'Content-Type' : 'application/json'
         }

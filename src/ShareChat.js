@@ -17,7 +17,7 @@ const ShareChat = () => {
   const fetchChatHistory = async (password) => {
     try {
       // Fetch chat history using session_id and password
-      const historyResponse = await axios.get(`http://127.0.0.1:5000/chat_history/${password}`, {
+      const historyResponse = await axios.get(`https://chatapi-ecbwhwf8bxhpd9ba.eastus2-01.azurewebsites.net/chat_history/${password}`, {
         
       });
 

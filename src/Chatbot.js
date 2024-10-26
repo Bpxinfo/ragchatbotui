@@ -17,7 +17,8 @@ function Chatbot() {
   const [selectedFile, setSelectedFile] = useState('');
   const [loading, setLoading] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
-  const [sessionId, setSessionId] = useState(localStorage.getItem('sessionId') || null); // Get session ID from localStorage if exists
+  const [sessionId, setSessionId] = useState(null); // Get session ID from localStorage if exists
+  const [showModal, setShowModal] = useState(false); // State for controlling the modal visibility
   const messagesEndRef = useRef(null);
   const chatContainerRef = useRef(null); // Reference for the sidebar chat history container
   const messageContainerRef = useRef(null);
@@ -127,7 +128,7 @@ function Chatbot() {
           return updatedMessages;
         });
 
-        await new Promise((resolve) => setTimeout(resolve, 20)); // Speed of rendering one character at a time
+        await new Promise((resolve) => setTimeout(resolve, 5)); // Speed of rendering one character at a time
         scrollToBottom(messageContainerRef);
       }
 
@@ -147,10 +148,45 @@ function Chatbot() {
     window.location.reload();
   };
 
-  const handleShareChat = () => {
-    const shareUrl = `${window.location.origin}/share_chat/${sessionId}`;
-    navigator.clipboard.writeText(shareUrl);
-    alert(`Chat URL copied to clipboard: ${shareUrl}`);
+  // Handle opening the modal when Share button is clicked
+  const handleOpenShareModal = () => {
+    if (!sessionId) {
+      alert('Session ID is not available. Please start a chat first.');
+    } else {
+      setShowModal(true); // Show the modal
+    }
+  };
+
+  // Handle closing the modal
+  const handleCloseModal = () => {
+    setShowModal(false);
+  };
+
+  // Trigger the save_chat API when Confirm is clicked
+  const handleConfirmShare = async () => {
+    try {
+      if (!sessionId) {
+        alert('Session ID is not available. Please start a chat first.');
+        return;
+      }
+
+      // Call the API to save the chat
+      const response = await axios.get(`https://chatapi-ecbwhwf8bxhpd9ba.eastus2-01.azurewebsites.net/save_chat/${sessionId}`);
+
+      if (response.status === 200) {
+        // Generate the shareable URL after successfully saving chat history
+        // const shareUrl = `${window.location.origin}/share/${sessionId}`;
+        // navigator.clipboard.writeText(shareUrl);
+        alert(`Chat history saved successfully`);
+      } else {
+        alert('Failed to save the chat history. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error sharing chat:', error);
+      alert('Error saving chat history. Please try again.');
+    } finally {
+      handleCloseModal(); // Close the modal after confirmation
+    }
   };
 
   const MessageComponent = ({ message }) => (
@@ -200,13 +236,30 @@ function Chatbot() {
         </div>
       </div>
 
-      {/* Main Chat */}
-      <div className="flex flex-col flex-1">
-        <div className="flex justify-between p-4 border-b border-gray-200">
-          <div className="text-lg font-bold">Chatbot</div>
+        {/* Main Chat Area */}
+      <div className={`flex-1 flex flex-col transition-all duration-300`}>
+        <div className={`flex items-center justify-between p-4 shadow-md ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
+          <div className={`text-xl font-bold cursor-pointer ${darkMode ? 'text-white-500' : 'text-black'}`} onClick={goToFile}>
+            File Process
+          </div>
           <div className="flex items-center space-x-4">
+            <div className="relative inline-block text-left w-full">
+              <select
+                id="fileSelect"
+                name="fileSelect"
+                value={selectedFile}
+                onChange={(e) => setSelectedFile(e.target.value)}
+                className={`transition-all duration-300 ease-in-out transform w-90 ${darkMode ? 'text-white bg-gray-700 hover:bg-gray-600 focus:ring-gray-500' : 'text-gray-900 bg-white hover:bg-gray-200 focus:ring-gray-300'} font-medium rounded-lg text-sm shadow-sm p-2`}
+              >
+                <option value="">Select a file</option>
+                {files.map((file) => (
+                  <option key={file.name} value={file.name}>{file.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-center space-x-4">
             <button
-              onClick={handleShareChat}
+              onClick={handleOpenShareModal} // Open the share modal
               className="p-2 rounded-full hover:bg-gray-200 focus:outline-none focus:ring focus:ring-blue-400"
             >
               <FiShare2 />
@@ -217,6 +270,8 @@ function Chatbot() {
             >
               {darkMode ? <FiSun /> : <FiMoon />}
             </button>
+          </div>
+            
           </div>
         </div>
 
@@ -248,6 +303,30 @@ function Chatbot() {
           </button>
         </form>
       </div>
+
+      {/* Modal for Sharing Chat */},
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white rounded-lg p-6 shadow-lg w-1/3">
+            <h2 className="text-xl font-bold mb-4">Share Chat Session</h2>
+            <p className="mb-4">Session ID: <strong>{sessionId}</strong></p>
+            <div className="flex justify-end space-x-4">
+              <button
+                onClick={handleCloseModal}
+                className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmShare}
+                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -93,7 +93,7 @@ function Chatbot() {
       await new Promise(resolve => setTimeout(resolve, 500)); // Optional delay for streaming effect
 
       const response = await axios.post(
-        'http://127.0.0.1:5000/chat',
+        'https://chatapi-ecbwhwf8bxhpd9ba.eastus2-01.azurewebsites.net/chat',
         payload,
         {
           headers: {
@@ -171,7 +171,7 @@ function Chatbot() {
       }
 
       // Call the API to save the chat
-      const response = await axios.get(`http://127.0.0.1:5000/save_chat/${sessionId}`);
+      const response = await axios.get(`https://chatapi-ecbwhwf8bxhpd9ba.eastus2-01.azurewebsites.net/save_chat/${sessionId}`);
 
       if (response.status === 200) {
         // Generate the shareable URL after successfully saving chat history

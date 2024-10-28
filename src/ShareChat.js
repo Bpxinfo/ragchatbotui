@@ -18,9 +18,7 @@ const ShareChat = () => {
   const fetchChatHistory = async (password) => {
     try {
       // Fetch chat history using session_id and password
-      const historyResponse = await axios.get(`https://chatapi-ecbwhwf8bxhpd9ba.eastus2-01.azurewebsites.net/chat_history/${password}`, {
-        // Additional options if needed (like headers)
-      });
+      const historyResponse = await axios.get(`https://chatapi-ecbwhwf8bxhpd9ba.eastus2-01.azurewebsites.net/chat_history/${password}`);
 
       // Handle new JSON format
       const { history, filename } = historyResponse.data;
@@ -75,18 +73,26 @@ const ShareChat = () => {
       {authenticated ? (
         <>
           {/* Conditionally render title based on the file name */}
-          <h1 className="text-2xl font-bold mb-4">
-            {fileName ? `${fileName}` : 'Chat History'}
+          <h1 className="text-3xl font-bold mb-6 text-center">
+            {fileName ? `File: ${fileName}` : 'Chat History'}
           </h1>
 
-          <div className="flex-1 overflow-y-auto w-full max-w-xl">
+          <div className="flex-1 overflow-y-auto w-full max-w-4xl p-4 bg-white rounded-lg shadow-md">
             {messages.map((message, index) => (
               <div
                 key={index}
-                className={`p-3 rounded mb-2 ${message.sender === 'user' ? 'bg-blue-500 text-white ml-auto max-w-[80%]' : 'bg-gray-300 text-gray-900 mr-auto max-w-[80%]'}`}
+                className={`p-4 my-3 rounded-lg shadow-md max-w-[90%] break-words overflow-hidden ${
+                  message.sender === 'user'
+                    ? 'bg-blue-500 text-white ml-auto'
+                    : 'bg-gray-200 text-gray-900 mr-auto'
+                }`}
               >
-                <div className="flex items-center">
-                  {message.sender === 'user' ? <FiUser className="mr-2" /> : <FiCpu className="mr-2" />}
+                <div className="flex items-center space-x-2">
+                  {message.sender === 'user' ? (
+                    <FiUser className="text-lg" />
+                  ) : (
+                    <FiCpu className="text-lg" />
+                  )}
                   <MessageComponent message={message.text} />
                 </div>
               </div>

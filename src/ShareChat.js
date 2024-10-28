@@ -74,7 +74,7 @@ const ShareChat = () => {
         <>
           {/* Conditionally render title based on the file name */}
           <h1 className="text-3xl font-bold mb-6 text-center">
-            {fileName ? `File: ${fileName}` : 'Chat History'}
+            {fileName ? `${fileName}` : 'Chat History'}
           </h1>
 
           <div className="flex-1 overflow-y-auto w-full max-w-4xl p-4 bg-white rounded-lg shadow-md">
